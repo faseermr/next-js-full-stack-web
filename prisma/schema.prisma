@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  sku          String?   @unique
+
+  baseUomId     String
+  baseUom       UOM      @relation("BaseUOM", fields: [baseUomId], references: [id])
+
+  conversions   ProductUOMConversion[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model UOM {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  code          String   @unique
+
+  // Opposite side of BaseUOM relation
+  productsBase  Product[] @relation("BaseUOM")
+
+  conversionsFrom ProductUOMConversion[] @relation("FromProductUOM")
+  conversionsTo   ProductUOMConversion[] @relation("ToProductUOM")
+}
+
+model ProductUOMConversion {
+  id            String   @id @default(uuid())
+
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+
+  fromUomId     String
+  fromUom       UOM      @relation("FromProductUOM", fields: [fromUomId], references: [id])
+
+  toUomId       String
+  toUom         UOM      @relation("ToProductUOM", fields: [toUomId], references: [id])
+
+  multiplier    Float
+  createdAt     DateTime @default(now())
+}
